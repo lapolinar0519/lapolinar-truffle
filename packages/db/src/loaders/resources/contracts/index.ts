@@ -53,8 +53,9 @@ export function* generateContractsLoad(
 
   // return only specific fields
   return result.data.workspace.contractsAdd.contracts.map(
-    ({ id, createBytecode, callBytecode }) => ({
+    ({ id, name, createBytecode, callBytecode }) => ({
       id,
+      name,
       createBytecode,
       callBytecode
     })
