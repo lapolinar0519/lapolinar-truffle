@@ -9,6 +9,7 @@ import { generateBytecodesLoad } from "@truffle/db/loaders/resources/bytecodes";
 import { generateCompilationsLoad } from "@truffle/db/loaders/resources/compilations";
 import { generateContractsLoad } from "@truffle/db/loaders/resources/contracts";
 import { generateSourcesLoad } from "@truffle/db/loaders/resources/sources";
+import { generateProjectLoad } from "@truffle/db/loaders/resources/projects";
 
 /**
  * For a compilation result from @truffle/workflow-compile/new, generate a
@@ -19,8 +20,12 @@ import { generateSourcesLoad } from "@truffle/db/loaders/resources/sources";
  * and ultimately returns nothing when complete.
  */
 export function* generateCompileLoad(
-  result: WorkflowCompileResult
+  result: WorkflowCompileResult,
+  { directory }: { directory: string }
 ): Generator<Request, any, Response> {
+  // start by adding loading the project resource
+  const project = yield* generateProjectLoad(directory);
+
   const compilationsWithContracts = Object.values(result.compilations).filter(
     ({ contracts }) => contracts.length > 0
   );
@@ -69,5 +74,5 @@ export function* generateCompileLoad(
     );
   }
 
-  return { compilations, compilationContracts };
+  return { project, compilations, compilationContracts };
 }
