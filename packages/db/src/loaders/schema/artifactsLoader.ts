@@ -15,7 +15,6 @@ import {
   AssignProjectNames,
   ResolveProjectName
 } from "@truffle/db/loaders/resources/projects";
-import { LoadedContract } from "../types";
 
 type NetworkLinkObject = {
   [name: string]: string;
@@ -295,7 +294,7 @@ export class ArtifactsLoader {
   }
 
   async loadContractInstances(
-    contracts: Array<LoadedContract>,
+    contracts: Array<DataModel.IContract>,
     networksArray: Array<Array<LoaderNetworkObject>>
   ) {
     // networksArray is an array of arrays of networks for each contract;

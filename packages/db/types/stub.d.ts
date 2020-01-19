@@ -29,12 +29,14 @@ declare namespace DataModel {
   type INetworksAddInput = any;
   type IProject = any;
   type IProjectsAddInput = any;
+  type IProjectsAddPayload = any;
   type IProjectName = any;
   type IProjectNameInput = any;
   type ISource = any;
   type ISourceInput = any;
   type ISourceRange = any;
   type ISourcesAddInput = any;
+  type ISourcesAddPayload = any;
 
   interface IWorkspaceQuery {
     [key: string]: any;

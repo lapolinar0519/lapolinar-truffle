@@ -46,24 +46,18 @@ export const toIdObject = <R extends Resource>({ id }: R): IdObject<R> =>
     id
   } as IdObject<R>);
 
-export interface LoadedContract {
-  id: string;
-  createBytecode: DataModel.IBytecode;
-  callBytecode: DataModel.IBytecode;
-}
-
-export interface Request {
+export interface WorkspaceRequest {
   mutation: string; // GraphQL request
   variables: {
     [name: string]: any;
   };
 }
 
-export interface Response {
+export type WorkspaceResponse<N extends string, R = any> = {
   data: {
-    workspace: any;
+    workspace: { [RequestName in N]: R };
   };
-}
+};
 
 /**
  * Output format of @truffle/workflow-compile/new

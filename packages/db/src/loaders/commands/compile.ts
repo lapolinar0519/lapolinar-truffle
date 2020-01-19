@@ -1,10 +1,10 @@
 import { TruffleDB } from "@truffle/db/db";
 import {
   WorkflowCompileResult,
+  WorkspaceRequest,
   IdObject,
   toIdObject,
-  Request,
-  Response
+  WorkspaceResponse
 } from "@truffle/db/loaders/types";
 
 import { generateBytecodesLoad } from "@truffle/db/loaders/resources/bytecodes";
@@ -24,7 +24,7 @@ import { generateProjectLoad } from "@truffle/db/loaders/resources/projects";
 export function* generateCompileLoad(
   result: WorkflowCompileResult,
   { directory }: { directory: string }
-): Generator<Request, any, Response> {
+): Generator<WorkspaceRequest, any, WorkspaceResponse<string>> {
   // start by adding loading the project resource
   const project = yield* generateProjectLoad(directory);
 
@@ -43,7 +43,9 @@ export function* generateCompileLoad(
   const compilationContractBytecodes = [];
   for (const compilation of compilationsWithContracts) {
     // add sources for each compilation
-    const sources = yield* generateSourcesLoad(compilation);
+    const sources: DataModel.ISource[] = yield* generateSourcesLoad(
+      compilation
+    );
 
     // add bytecodes
     const contractBytecodes = yield* generateBytecodesLoad(
@@ -54,7 +56,7 @@ export function* generateCompileLoad(
     // record compilation with its sources (bytecodes are related later)
     loadableCompilations.push({
       compilation,
-      sources
+      sources: sources.map(toIdObject)
     });
   }
   const compilations = yield* generateCompilationsLoad(loadableCompilations);
@@ -72,7 +74,7 @@ export function* generateCompileLoad(
     compilationContracts[compilation.id] = yield* generateContractsLoad(
       compiledContracts,
       contractBytecodes,
-      ({ id: compilation.id } as unknown) as IdObject<DataModel.ICompilation>
+      toIdObject(compilation)
     );
   }
 

@@ -2,7 +2,10 @@ import { GraphQLSchema, DocumentNode, parse, execute } from "graphql";
 
 import { schema } from "@truffle/db/data";
 import { generateCompileLoad } from "@truffle/db/loaders/commands/compile";
-import { WorkflowCompileResult, Request } from "@truffle/db/loaders/types";
+import {
+  WorkflowCompileResult,
+  WorkspaceRequest
+} from "@truffle/db/loaders/types";
 import { Workspace } from "@truffle/db/workspace";
 
 interface IConfig {
@@ -53,9 +56,12 @@ export class TruffleDB {
     let cur = saga.next();
     while (!cur.done) {
       // HACK not sure why this is necessary; TS knows we're not done, so
-      // cur.value should only ever be Request here (first Generator param),
+      // cur.value should only be WorkspaceRequest (first Generator param),
       // not the return value (second Generator param)
-      const { mutation, variables }: Request = cur.value as Request;
+      const {
+        mutation,
+        variables
+      }: WorkspaceRequest = cur.value as WorkspaceRequest;
       const response = await this.query(mutation, variables);
 
       cur = saga.next(response);

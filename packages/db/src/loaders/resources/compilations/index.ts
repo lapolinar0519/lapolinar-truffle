@@ -1,4 +1,9 @@
-import { Compilation, IdObject, Request } from "@truffle/db/loaders/types";
+import {
+  Compilation,
+  IdObject,
+  WorkspaceRequest,
+  WorkspaceResponse
+} from "@truffle/db/loaders/types";
 
 import { AddCompilations } from "./add.graphql";
 export { AddCompilations };
@@ -51,27 +56,18 @@ const compilationInput = ({
   }
 };
 
-interface LoadableCompilation {
+type LoadableCompilation = {
   compilation: Compilation;
-  sources: IdObject[];
-}
-
-interface LoadedCompilation {
-  id: string;
-  compiler: DataModel.ICompiler;
-}
-
-interface CompilationsAddResponse {
-  data: {
-    workspace: {
-      compilationsAdd: DataModel.ICompilationsAddPayload;
-    };
-  };
-}
+  sources: IdObject<DataModel.ISource>[];
+};
 
 export function* generateCompilationsLoad(
   loadableCompilations: LoadableCompilation[]
-): Generator<Request, LoadedCompilation[], CompilationsAddResponse> {
+): Generator<
+  WorkspaceRequest,
+  DataModel.ICompilation[],
+  WorkspaceResponse<"compilationsAdd", DataModel.ICompilationsAddPayload>
+> {
   const compilations = loadableCompilations.map(compilationInput);
 
   const result = yield {
@@ -79,8 +75,5 @@ export function* generateCompilationsLoad(
     variables: { compilations }
   };
 
-  // return only array of objects { id }
-  return result.data.workspace.compilationsAdd.compilations.map(
-    ({ id, compiler }) => ({ id, compiler })
-  );
+  return result.data.workspace.compilationsAdd.compilations;
 }
