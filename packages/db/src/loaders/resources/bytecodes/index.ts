@@ -41,7 +41,7 @@ export function* generateBytecodesLoad(
 
   // submit
   const result = yield {
-    mutation: AddBytecodes,
+    request: AddBytecodes,
     variables: { bytecodes }
   };
   const addedBytecodes = result.data.workspace.bytecodesAdd.bytecodes.map(

@@ -17,7 +17,7 @@ export function* generateProjectLoad(
   WorkspaceResponse<"projectsAdd", DataModel.IProjectsAddPayload>
 > {
   const result = yield {
-    mutation: AddProjects,
+    request: AddProjects,
     variables: {
       projects: [{ directory }]
     }
@@ -36,7 +36,7 @@ export function* generateProjectNameResolve(
   WorkspaceResponse<"project", { resolve: DataModel.IProject["resolve"] }>
 > {
   const result = yield {
-    mutation: ResolveProjectName,
+    request: ResolveProjectName,
     variables: {
       projectId: project.id,
       name,
@@ -63,7 +63,7 @@ export function* generateProjectNamesAssign(
   }));
 
   yield {
-    mutation: AssignProjectNames,
+    request: AssignProjectNames,
     variables: { projectNames }
   };
 }

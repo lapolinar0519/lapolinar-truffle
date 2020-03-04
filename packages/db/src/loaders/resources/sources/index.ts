@@ -22,7 +22,7 @@ export function* generateSourcesLoad(
   const inputs = compilation.sources.map(({ input }) => input);
 
   const result = yield {
-    mutation: AddSources,
+    request: AddSources,
     variables: { sources: inputs }
   };
 

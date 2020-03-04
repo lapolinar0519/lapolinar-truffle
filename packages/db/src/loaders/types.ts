@@ -64,7 +64,7 @@ export const toIdObject = <R extends Resource>({ id }: R): IdObject<R> =>
   } as IdObject<R>);
 
 export interface WorkspaceRequest {
-  mutation: string; // GraphQL request
+  request: string; // GraphQL request
   variables: {
     [name: string]: any;
   };

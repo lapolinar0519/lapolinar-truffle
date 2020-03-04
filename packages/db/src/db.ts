@@ -59,10 +59,10 @@ export class TruffleDB {
       // cur.value should only be WorkspaceRequest (first Generator param),
       // not the return value (second Generator param)
       const {
-        mutation,
+        request,
         variables
       }: WorkspaceRequest = cur.value as WorkspaceRequest;
-      const response = await this.query(mutation, variables);
+      const response = await this.query(request, variables);
 
       cur = saga.next(response);
     }

@@ -54,7 +54,7 @@ export function* generateNameRecordsLoad(
   }
 
   const result = yield {
-    mutation: AddNameRecords,
+    request: AddNameRecords,
     variables: { nameRecords }
   };
 

@@ -48,7 +48,7 @@ export function* generateContractsLoad(
   });
 
   const result = yield {
-    mutation: AddContracts,
+    request: AddContracts,
     variables: { contracts }
   };
 
