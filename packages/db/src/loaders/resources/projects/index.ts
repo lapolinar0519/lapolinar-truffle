@@ -25,3 +25,45 @@ export function* generateProjectLoad(
 
   return result.data.workspace.projectsAdd.projects[0];
 }
+
+export function* generateProjectNameResolve(
+  project: IdObject<DataModel.IProject>,
+  name: string,
+  type: string
+): Generator<
+  WorkspaceRequest,
+  DataModel.INameRecord,
+  WorkspaceResponse<"project", { resolve: DataModel.IProject["resolve"] }>
+> {
+  const result = yield {
+    mutation: ResolveProjectName,
+    variables: {
+      projectId: project.id,
+      name,
+      type
+    }
+  };
+
+  return result.data.workspace.project.resolve[0];
+}
+
+export function* generateProjectNamesAssign(
+  project: IdObject<DataModel.IProject>,
+  nameRecords: DataModel.INameRecord[]
+): Generator<
+  WorkspaceRequest,
+  void,
+  WorkspaceResponse<"projectNamesAssign", DataModel.IProjectNamesAssignPayload>
+> {
+  const projectNames = nameRecords.map(({ id, name, type }) => ({
+    project,
+    nameRecord: { id },
+    name,
+    type
+  }));
+
+  yield {
+    mutation: AssignProjectNames,
+    variables: { projectNames }
+  };
+}
