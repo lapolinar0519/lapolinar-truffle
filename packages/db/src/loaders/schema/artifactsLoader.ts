@@ -8,6 +8,7 @@ import Config from "@truffle/config";
 import { Environment } from "@truffle/environment";
 import Web3 from "web3";
 
+import { GetCompilation } from "@truffle/db/loaders/resources/compilations";
 import { AddContractInstances } from "@truffle/db/loaders/resources/contractInstances";
 import { AddNameRecords } from "@truffle/db/loaders/resources/nameRecords";
 import { AddNetworks } from "@truffle/db/loaders/resources/networks";
@@ -94,10 +95,15 @@ export class ArtifactsLoader {
 
     //map contracts and contract instances to compiler
     await Promise.all(
-      compilations.map(async ({ compiler, id }) => {
+      compilations.map(async ({ id }) => {
+        const {
+          data: {
+            workspace: { compilation }
+          }
+        } = await this.db.query(GetCompilation, { id });
         const networks = await this.loadNetworks(
           project.id,
-          result.compilations[compiler.name].contracts,
+          result.compilations[compilation.compiler.name].contracts,
           this.config["artifacts_directory"],
           this.config["contracts_directory"]
         );

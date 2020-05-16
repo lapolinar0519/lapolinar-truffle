@@ -8,6 +8,8 @@ import {
 import { AddCompilations } from "./add.graphql";
 export { AddCompilations };
 
+export { GetCompilation } from "./get.graphql";
+
 const compilationCompilerInput = ({
   compilation: { contracts }
 }: {
