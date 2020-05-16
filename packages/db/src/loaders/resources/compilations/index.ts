@@ -17,15 +17,14 @@ const compilationCompilerInput = ({
   version: contracts[0].compiler.version
 });
 
-const compilationSourceContractInputs = ({
+const compilationProcessedSourceInputs = ({
   compilation: { contracts },
   sources
 }: {
   compilation: Compilation;
   sources: IdObject<DataModel.ISource>[];
-}): DataModel.ICompilationSourceContractInput[] =>
-  contracts.map(({ contractName: name, ast }, index) => ({
-    name,
+}): DataModel.ICompilationProcessedSourceInput[] =>
+  contracts.map(({ ast }, index) => ({
     source: sources[index],
     ast: ast ? { json: JSON.stringify(ast) } : undefined
   }));
@@ -38,19 +37,22 @@ const compilationInput = ({
   sources: IdObject<DataModel.ISource>[];
 }): DataModel.ICompilationInput => {
   const compiler = compilationCompilerInput({ compilation });
-  const contracts = compilationSourceContractInputs({ compilation, sources });
+  const processedSources = compilationProcessedSourceInputs({
+    compilation,
+    sources
+  });
 
   if (compiler.name === "solc") {
     return {
       compiler,
-      contracts,
+      processedSources,
       sources,
       sourceMaps: compilation.contracts.map(({ sourceMap: json }) => ({ json }))
     };
   } else {
     return {
       compiler,
-      contracts,
+      processedSources,
       sources
     };
   }

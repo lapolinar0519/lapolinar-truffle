@@ -33,7 +33,7 @@ export function* generateContractsLoad(
         json: JSON.stringify(abiObject)
       },
       compilation,
-      sourceContract: { index },
+      processedSource: { index },
       createBytecode: toIdObject(createBytecode),
       callBytecode: toIdObject(callBytecode)
     };
