@@ -87,28 +87,34 @@ export class ArtifactsLoader {
   async load(): Promise<void> {
     const result = await Contracts.compile(this.config);
 
-    const {
-      project,
-      compilations,
-      compilationContracts
-    } = await this.db.loadCompilations(result);
+    const { project, compilations } = await this.db.loadCompilations(result);
 
     //map contracts and contract instances to compiler
     await Promise.all(
       compilations.map(async ({ id }) => {
         const {
           data: {
-            workspace: { compilation }
+            workspace: {
+              compilation: { compiler, processedSources }
+            }
           }
         } = await this.db.query(GetCompilation, { id });
+
         const networks = await this.loadNetworks(
           project.id,
-          result.compilations[compilation.compiler.name].contracts,
+          result.compilations[compiler.name].contracts,
           this.config["artifacts_directory"],
           this.config["contracts_directory"]
         );
 
-        const contracts = compilationContracts[id];
+        const processedSourceContracts = processedSources
+          .map(processedSource => processedSource.contracts)
+          .flat();
+
+        const contracts = result.compilations[compiler.name].contracts.map(
+          ({ contractName }) =>
+            processedSourceContracts.find(({ name }) => name === contractName)
+        );
 
         if (networks[0].length) {
           await this.loadContractInstances(contracts, networks);

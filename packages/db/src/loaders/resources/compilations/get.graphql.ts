@@ -8,6 +8,33 @@ export const GetCompilation = gql`
         compiler {
           name
         }
+        sourceMaps {
+          json
+        }
+        processedSources {
+          source {
+            sourcePath
+          }
+
+          contracts {
+            id
+            name
+            createBytecode {
+              id
+              bytes
+              linkReferences {
+                name
+              }
+            }
+            callBytecode {
+              id
+              bytes
+              linkReferences {
+                name
+              }
+            }
+          }
+        }
       }
     }
   }

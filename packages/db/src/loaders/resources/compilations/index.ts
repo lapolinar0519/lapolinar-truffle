@@ -1,5 +1,6 @@
 import {
-  Compilation,
+  CompilationData,
+  LoadedSources,
   IdObject,
   WorkspaceRequest,
   WorkspaceResponse
@@ -10,59 +11,55 @@ export { AddCompilations };
 
 export { GetCompilation } from "./get.graphql";
 
-const compilationCompilerInput = ({
-  compilation: { contracts }
-}: {
-  compilation: Compilation;
-}): DataModel.ICompilerInput => ({
-  name: contracts[0].compiler.name,
-  version: contracts[0].compiler.version
-});
-
-const compilationProcessedSourceInputs = ({
-  compilation: { contracts },
-  sources
-}: {
-  compilation: Compilation;
-  sources: IdObject<DataModel.ISource>[];
-}): DataModel.ICompilationProcessedSourceInput[] =>
-  contracts.map(({ ast }, index) => ({
-    source: sources[index],
-    ast: ast ? { json: JSON.stringify(ast) } : undefined
-  }));
-
-const compilationInput = ({
+const compilationSourceInputs = ({
   compilation,
   sources
-}: {
-  compilation: Compilation;
-  sources: IdObject<DataModel.ISource>[];
-}): DataModel.ICompilationInput => {
-  const compiler = compilationCompilerInput({ compilation });
-  const processedSources = compilationProcessedSourceInputs({
-    compilation,
-    sources
-  });
+}: LoadableCompilation): DataModel.ICompilationSourceInput[] =>
+  compilation.sources.map(({ input: { sourcePath } }) => sources[sourcePath]);
 
-  if (compiler.name === "solc") {
-    return {
-      compiler,
-      processedSources,
-      sources,
-      sourceMaps: compilation.contracts.map(({ sourceMap: json }) => ({ json }))
-    };
-  } else {
-    return {
-      compiler,
-      processedSources,
-      sources
-    };
+const compilationProcessedSourceInputs = ({
+  compilation,
+  sources
+}: LoadableCompilation): DataModel.ICompilationProcessedSourceInput[] =>
+  compilation.sources.map(({ input: { sourcePath }, contracts }) => ({
+    source: sources[sourcePath],
+    // PRECONDITION: all contracts in the same compilation with the same
+    // sourcePath must have the same AST
+    ast: contracts[0].ast
+      ? { json: JSON.stringify(contracts[0].ast) }
+      : undefined
+  }));
+
+const compilationSourceMapInputs = ({
+  compilation,
+  sources
+}: LoadableCompilation): DataModel.ICompilationSourceMapInput[] => {
+  const contracts = compilation.sources
+    .map(({ contracts }) => contracts)
+    .flat();
+
+  const sourceMaps = contracts
+    .map(({ sourceMap, deployedSourceMap }) => [sourceMap, deployedSourceMap])
+    .flat()
+    .filter(Boolean);
+
+  if (sourceMaps.length) {
+    return sourceMaps.map(sourceMap => ({ json: sourceMap }));
   }
 };
 
+const compilationInput = (
+  data: LoadableCompilation
+): DataModel.ICompilationInput => ({
+  compiler: data.compilation.compiler,
+  processedSources: compilationProcessedSourceInputs(data),
+  sources: compilationSourceInputs(data),
+  sourceMaps: compilationSourceMapInputs(data)
+});
+
 type LoadableCompilation = {
-  compilation: Compilation;
-  sources: IdObject<DataModel.ISource>[];
+  compilation: CompilationData;
+  sources: LoadedSources;
 };
 
 export function* generateCompilationsLoad(

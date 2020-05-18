@@ -1,6 +1,8 @@
 import { TruffleDB } from "@truffle/db/db";
 import {
   WorkflowCompileResult,
+  CompilationData,
+  CompiledContract,
   WorkspaceRequest,
   IdObject,
   toIdObject,
@@ -37,9 +39,7 @@ export function* generateCompileLoad(
     return yield* generateProjectNameResolve(toIdObject(project), name, type);
   };
 
-  const compilationsWithContracts = Object.values(result.compilations).filter(
-    ({ contracts }) => contracts.length > 0
-  );
+  const resultCompilations = processResultCompilations(result);
 
   // for each compilation returned by workflow-compile:
   // - add sources
@@ -49,42 +49,48 @@ export function* generateCompileLoad(
   // track each compilation's bytecodes by contract
   // NOTE: this relies on array indices
   const loadableCompilations = [];
-  const compilationContractBytecodes = [];
-  for (const compilation of compilationsWithContracts) {
-    // add sources for each compilation
-    const sources: DataModel.ISource[] = yield* generateSourcesLoad(
-      compilation
-    );
+  const compilationBytecodes = [];
+  for (const compilation of resultCompilations) {
+    // add sources
+    const sources = yield* generateSourcesLoad(compilation);
 
     // add bytecodes
-    const contractBytecodes = yield* generateBytecodesLoad(
-      compilation.contracts
-    );
-    compilationContractBytecodes.push(contractBytecodes);
+    const bytecodes = yield* generateBytecodesLoad(compilation);
+    compilationBytecodes.push(bytecodes);
 
     // record compilation with its sources (bytecodes are related later)
     loadableCompilations.push({
       compilation,
-      sources: sources.map(toIdObject)
+      sources
     });
   }
+
   const compilations = yield* generateCompilationsLoad(loadableCompilations);
 
-  // now time to add contracts and track them by compilation
+  // now time to add contracts
   //
   // again going one compilation at a time (for impl. convenience; HACK)
   // (@cds-amal reminds that "premature optimization is the root of all evil")
-  const compilationContracts = {};
   for (const [compilationIndex, compilation] of compilations.entries()) {
-    const compiledContracts =
-      compilationsWithContracts[compilationIndex].contracts;
-    const contractBytecodes = compilationContractBytecodes[compilationIndex];
+    const resultCompilation = resultCompilations[compilationIndex];
+    const bytecodes = compilationBytecodes[compilationIndex];
 
-    const contracts = yield* generateContractsLoad(
-      compiledContracts,
-      contractBytecodes,
-      toIdObject(compilation)
-    );
+    const loadableContracts = [];
+    for (const [
+      sourceIndex,
+      { contracts }
+    ] of resultCompilation.sources.entries()) {
+      for (const [contractIndex, contract] of contracts.entries()) {
+        loadableContracts.push({
+          contract,
+          path: { sourceIndex, contractIndex },
+          bytecodes,
+          compilation
+        });
+      }
+    }
+
+    const contracts = yield* generateContractsLoad(loadableContracts);
 
     const nameRecords = yield* generateNameRecordsLoad(
       contracts,
@@ -93,9 +99,50 @@ export function* generateCompileLoad(
     );
 
     yield* generateProjectNamesAssign(toIdObject(project), nameRecords);
-
-    compilationContracts[compilation.id] = contracts;
   }
 
-  return { project, compilations, compilationContracts };
+  return { project, compilations };
+}
+
+/**
+ * precondition: same compiler is listed for each contract in a compilation
+ */
+function processResultCompilations(
+  result: WorkflowCompileResult
+): CompilationData[] {
+  return Object.values(result.compilations)
+    .filter(({ contracts }) => contracts.length > 0)
+    .map(processResultCompilation);
+}
+
+function processResultCompilation({
+  sourceIndexes,
+  contracts
+}: WorkflowCompileResult["compilations"][string]): CompilationData {
+  const contractsBySourcePath: {
+    [sourcePath: string]: CompiledContract[];
+  } = contracts.map(contract => [contract.sourcePath, contract]).reduce(
+    (obj, [sourcePath, contract]: [string, CompiledContract]) => ({
+      ...obj,
+      [sourcePath]: [...(obj[sourcePath] || []), contract]
+    }),
+    {}
+  );
+
+  return {
+    // PRECONDITION: all contracts in the same compilation **must** have the
+    // same compiler
+    compiler: contracts[0].compiler,
+    sources: sourceIndexes.map((sourcePath, index) => ({
+      index,
+      contracts: contractsBySourcePath[sourcePath],
+      input: {
+        // PRECONDITION: all contracts in the same compilation with the same
+        // sourcePath **must** have the same source contents
+        contents: contractsBySourcePath[sourcePath][0].source,
+
+        sourcePath
+      }
+    }))
+  };
 }
