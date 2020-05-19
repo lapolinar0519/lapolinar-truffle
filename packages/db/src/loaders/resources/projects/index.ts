@@ -1,4 +1,4 @@
-import { IdObject, Request } from "@truffle/db/loaders/types";
+import { IdObject, toIdObject, Request } from "@truffle/db/loaders/types";
 
 import { AddProjects } from "./add.graphql";
 import { AssignProjectNames } from "./assign.graphql";
@@ -19,7 +19,7 @@ interface ProjectsAddResponse {
 
 export function* generateProjectLoad(
   directory: string
-): Generator<Request, IdObject, ProjectsAddResponse> {
+): Generator<Request, IdObject<DataModel.IProject>, ProjectsAddResponse> {
   const result = yield {
     mutation: AddProjects,
     variables: {
@@ -27,6 +27,7 @@ export function* generateProjectLoad(
     }
   };
 
-  const { id } = result.data.workspace.projectsAdd.projects[0];
-  return { id };
+  return (result.data.workspace.projectsAdd.projects[0] as unknown) as IdObject<
+    DataModel.IProject
+  >;
 }

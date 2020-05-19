@@ -33,9 +33,18 @@ export interface ContractBytecodes {
   callBytecode: DataModel.IBytecode;
 }
 
-export interface IdObject {
+type Resource = {
   id: string;
-}
+};
+
+export type IdObject<R extends Resource = Resource> = {
+  [N in keyof R]: N extends "id" ? string : never
+};
+
+export const toIdObject = <R extends Resource>({ id }: R): IdObject<R> =>
+  ({
+    id
+  } as IdObject<R>);
 
 export interface LoadedContract {
   id: string;

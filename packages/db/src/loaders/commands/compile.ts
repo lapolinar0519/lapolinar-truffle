@@ -1,6 +1,8 @@
 import { TruffleDB } from "@truffle/db/db";
 import {
   WorkflowCompileResult,
+  IdObject,
+  toIdObject,
   Request,
   Response
 } from "@truffle/db/loaders/types";
@@ -50,7 +52,10 @@ export function* generateCompileLoad(
     compilationContractBytecodes.push(contractBytecodes);
 
     // record compilation with its sources (bytecodes are related later)
-    loadableCompilations.push({ compilation, sources });
+    loadableCompilations.push({
+      compilation,
+      sources
+    });
   }
   const compilations = yield* generateCompilationsLoad(loadableCompilations);
 
@@ -59,18 +64,15 @@ export function* generateCompileLoad(
   // again going one compilation at a time (for impl. convenience; HACK)
   // (@cds-amal reminds that "premature optimization is the root of all evil")
   const compilationContracts = {};
-  for (const [
-    compilationIndex,
-    { id: compilationId }
-  ] of compilations.entries()) {
+  for (const [compilationIndex, compilation] of compilations.entries()) {
     const compiledContracts =
       compilationsWithContracts[compilationIndex].contracts;
     const contractBytecodes = compilationContractBytecodes[compilationIndex];
 
-    compilationContracts[compilationId] = yield* generateContractsLoad(
+    compilationContracts[compilation.id] = yield* generateContractsLoad(
       compiledContracts,
       contractBytecodes,
-      { id: compilationId }
+      ({ id: compilation.id } as unknown) as IdObject<DataModel.ICompilation>
     );
   }
 

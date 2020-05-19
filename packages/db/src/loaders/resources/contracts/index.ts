@@ -2,6 +2,7 @@ import {
   CompiledContract,
   ContractBytecodes,
   IdObject,
+  toIdObject,
   LoadedContract,
   Request
 } from "@truffle/db/loaders/types";
@@ -24,7 +25,7 @@ interface ContractsAddResponse {
 export function* generateContractsLoad(
   compiledContracts: CompiledContract[],
   contractBytecodes: ContractBytecodes[],
-  compilation: IdObject
+  compilation: IdObject<DataModel.ICompilation>
 ): Generator<Request, LoadedContract[], ContractsAddResponse> {
   const contracts = compiledContracts.map((contract, index) => {
     const { contractName: name, abi: abiObject } = contract;
@@ -37,12 +38,8 @@ export function* generateContractsLoad(
       },
       compilation,
       sourceContract: { index },
-      createBytecode: {
-        id: createBytecode.id
-      },
-      callBytecode: {
-        id: callBytecode.id
-      }
+      createBytecode: toIdObject(createBytecode),
+      callBytecode: toIdObject(callBytecode)
     };
   });
 

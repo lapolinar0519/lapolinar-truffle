@@ -17,7 +17,7 @@ const compilationSourceContractInputs = ({
   sources
 }: {
   compilation: Compilation;
-  sources: IdObject[];
+  sources: IdObject<DataModel.ISource>[];
 }): DataModel.ICompilationSourceContractInput[] =>
   contracts.map(({ contractName: name, ast }, index) => ({
     name,
@@ -30,7 +30,7 @@ const compilationInput = ({
   sources
 }: {
   compilation: Compilation;
-  sources: IdObject[];
+  sources: IdObject<DataModel.ISource>[];
 }): DataModel.ICompilationInput => {
   const compiler = compilationCompilerInput({ compilation });
   const contracts = compilationSourceContractInputs({ compilation, sources });
